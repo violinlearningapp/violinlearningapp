@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - KeyNote
+  - PauseField
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: BG
+    uniqueID: 1601106253
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Staff
+    uniqueID: 1830375523
+    locked: 0
+  - name: String
+    uniqueID: 1627266345
+    locked: 0
+  - name: Note
+    uniqueID: 3157791521
+    locked: 0

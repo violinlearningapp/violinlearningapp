@@ -136,7 +136,7 @@ public class KeyNote : MonoBehaviour {
                 if(stringNote)
                 transform.localScale = new Vector3(Mathf.Lerp(transform.localScale.x, 1.0f, time), Mathf.Lerp(transform.localScale.y, 0.015f, time), 1);
                 else
-                transform.localScale = new Vector3(Mathf.Lerp(transform.localScale.x, 1.0f, time), Mathf.Lerp(transform.localScale.y, 1.0f, time), 1);
+                transform.localScale = new Vector3(Mathf.Lerp(transform.localScale.x, 10.0f, time), Mathf.Lerp(transform.localScale.y, 10.0f, time), 1);
                 sprite.color = new Color(Mathf.Lerp(sprite.color.r, target.r, time), Mathf.Lerp(sprite.color.g, target.g, time), Mathf.Lerp(sprite.color.b, target.b, time), Mathf.Lerp(sprite.color.a, target.a, time));
 
 

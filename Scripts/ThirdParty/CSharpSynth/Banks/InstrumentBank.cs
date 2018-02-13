@@ -162,7 +162,7 @@ namespace CSharpSynth.Banks
                 return DrumBank;
         }
         public void removeInstrument(int index, bool isDrum)
-        {//Does not delete the index location so the other instruments keep their locations
+        {//Does not delete the index position so the other instruments keep their positions
             if (isDrum == true)
                 DrumBank[index] = null;
             else

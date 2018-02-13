@@ -21,6 +21,8 @@ public class MIDIPlayer : MonoBehaviour
     public int midiNoteVolume = 100;
     [Range(0, 127)] //From Piano to Gunshot
     public int midiInstrument = 0;
+    public bool SyncTrack;
+    public bool Active = false;
     //Private 
     private float[] sampleBuffer;
     private float gain = 1f;
@@ -48,16 +50,15 @@ public class MIDIPlayer : MonoBehaviour
     // is being loaded.
     void Awake()
     {
-        midiStreamSynthesizer = new StreamSynthesizer(44100, 2, bufferSize, 40);
-        sampleBuffer = new float[midiStreamSynthesizer.BufferSize];
-        
-        midiStreamSynthesizer.LoadBank(bankFilePath);
 
-        midiSequencer = new MidiSequencer(midiStreamSynthesizer);
+            
+            midiStreamSynthesizer = new StreamSynthesizer(44100, 2, bufferSize, 40);
+            sampleBuffer = new float[midiStreamSynthesizer.BufferSize];
 
-        //These will be fired by the midiSequencer when a song plays. Check the console for messages if you uncomment these
-        midiSequencer.NoteOnEvent += new MidiSequencer.NoteOnEventHandler (MidiNoteOnHandler);
-        //midiSequencer.NoteOffEvent += new MidiSequencer.NoteOffEventHandler (MidiNoteOffHandler);			
+            midiStreamSynthesizer.LoadBank(bankFilePath);
+
+            midiSequencer = new MidiSequencer(midiStreamSynthesizer);
+
     }
 
     void LoadSong(string midiPath)
@@ -66,46 +67,74 @@ public class MIDIPlayer : MonoBehaviour
         midiSequencer.Play();
     }
 
+    public void SyncStart()
+    {
+        Active = true;
+
+        //These will be fired by the midiSequencer when a song plays. Check the console for messages if you uncomment these
+        midiSequencer.NoteOnEvent += new MidiSequencer.NoteOnEventHandler(MidiNoteOnHandler);
+        //midiSequencer.NoteOffEvent += new MidiSequencer.NoteOffEventHandler (MidiNoteOffHandler);	
+    }
+
+
+    IEnumerator Wait()
+    {
+        yield return new WaitForSeconds(3);
+        if (!SyncTrack)
+        {
+            Active = true;
+            //These will be fired by the midiSequencer when a song plays. Check the console for messages if you uncomment these
+            midiSequencer.NoteOnEvent += new MidiSequencer.NoteOnEventHandler(MidiNoteOnHandler);
+            //midiSequencer.NoteOffEvent += new MidiSequencer.NoteOffEventHandler (MidiNoteOffHandler);
+        }
+        if (!SyncTrack)
+            GameObject.Find("NoteSpawner").transform.GetComponent<NoteSpawner2>().syncNote();
+    }
     // Start is called just before any of the
     // Update methods is called the first time.
     void Start()
     {
+        StartCoroutine(Wait());
+        
     }
 
     // Update is called every frame, if the
     // MonoBehaviour is enabled.
     void Update()
     {
-        if (state == true)
-        {
-            GameObject.Find("NoteSpawner").transform.GetComponent<NoteSpawner>().spawnNote(violinString, violinNote);
-            GameMaster.DisplayNote(noteString);
-            state = false;
-        }
 
-        if (!midiSequencer.isPlaying)
+        if (Active == true)
         {
-            //if (!GetComponent<AudioSource>().isPlaying)
-            if (ShouldPlayFile)
+            if (state == true && SyncTrack == false)
             {
-                LoadSong(midiFilePath);
+          
+                GameObject.Find("NoteSpawner").transform.GetComponent<NoteSpawner2>().spawnNote(violinString, violinNote);
+                state = false;
+            }
+
+            if (!midiSequencer.isPlaying)
+            {
+                //if (!GetComponent<AudioSource>().isPlaying)
+                if (ShouldPlayFile)
+                {
+                    LoadSong(midiFilePath);
+                }
+            }
+            else if (!ShouldPlayFile)
+            {
+                midiSequencer.Stop(true);
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                midiStreamSynthesizer.NoteOn(0, midiNote, midiNoteVolume, midiInstrument);
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                midiStreamSynthesizer.NoteOff(0, midiNote);
             }
         }
-        else if (!ShouldPlayFile)
-        {
-            midiSequencer.Stop(true);
-        }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            midiStreamSynthesizer.NoteOn(0, midiNote, midiNoteVolume, midiInstrument);
-        }
-
-        if (Input.GetMouseButtonDown(1))
-        {
-            midiStreamSynthesizer.NoteOff(0, midiNote);
-        }
-
 
         }
 
@@ -123,19 +152,22 @@ public class MIDIPlayer : MonoBehaviour
         //	(it turns red if the filter is taking up too much time, so the mixer will starv audio data). 
         //	Also note, that OnAudioFilterRead is called on a different thread from the main thread (namely the audio thread) 
         //	so calling into many Unity functions from this function is not allowed ( a warning will show up ). 	
-     private void OnAudioFilterRead(float[] data, int channels)
+    private void OnAudioFilterRead(float[] data, int channels)
     {
-        //This uses the Unity specific float method we added to get the buffer
-        midiStreamSynthesizer.GetNext(sampleBuffer);
-        for (int i = 0; i < data.Length; i++)
+        if (Active == true)
         {
-            data[i] = sampleBuffer[i] * gain;
+            //This uses the Unity specific float method we added to get the buffer
+            midiStreamSynthesizer.GetNext(sampleBuffer);
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i] = sampleBuffer[i] * gain;
+            }
         }
     }
 
     public void MidiNoteOnHandler(int channel, int note, int velocity)
     {
-        Debug.Log("NoteOn: " + note.ToString() + " Velocity: " + velocity.ToString());
+      //  Debug.Log("NoteOn: " + note.ToString() + " Velocity: " + velocity.ToString());
       
         int counter = 4;
         int newNote = (note % 55) % 28;
@@ -164,6 +196,7 @@ public class MIDIPlayer : MonoBehaviour
 
     public void MidiNoteOffHandler(int channel, int note)
     {
-        Debug.Log("NoteOff: " + note.ToString());
+       // Debug.Log("NoteOff: " + note.ToString());
     }
 }
+

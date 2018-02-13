@@ -23,7 +23,7 @@ namespace CSharpSynth.Synthesis
         private bool inUse;
         private VoiceState state;
         private StreamSynthesizer synth;
-        private double time;
+        public double time;
         private float fadeMultiplier;
         private int fadeCounter;
         private int decayCounter;

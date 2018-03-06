@@ -20,6 +20,8 @@ namespace CSharpSynth.Sequencer
         private MidiSequencerEvent seqEvt;
         private int sampleTime;
         private int eventIndex;
+        public Queue<uint> NoteLengths = new Queue<uint>();
+        public bool sync = false;
         //--Events
         public delegate void NoteOnEventHandler(int channel, int note, int velocity);
         public event NoteOnEventHandler NoteOnEvent;
@@ -95,16 +97,58 @@ namespace CSharpSynth.Sequencer
                     //Convert delta time to sample time
                     eventIndex = 0;
                     uint lastSample = 0;
+                   
+
+                    uint noteon = 0;
+                    uint noteoff = 0;
+                    bool set = false;
+                    bool set2 = false;
+                    
                     for (int x = 0; x < _MidiFile.Tracks[0].MidiEvents.Length; x++)
                     {
+
                         _MidiFile.Tracks[0].MidiEvents[x].deltaTime = lastSample + (uint)DeltaTimetoSamples(_MidiFile.Tracks[0].MidiEvents[x].deltaTime);
                         lastSample = _MidiFile.Tracks[0].MidiEvents[x].deltaTime;
+                        if (_MidiFile.Tracks[0].MidiEvents[x].midiChannelEvent == MidiHelper.MidiChannelEvent.Note_On /* && set2 == false*/)
+                        {
+                            noteon = /*_MidiFile.Tracks[0].MidiEvents[x].deltaTime */ System.Convert.ToUInt32(_MidiFile.Tracks[0].MidiEvents[x].Parameters[1]);
+                            set2 = true;
+                        }
+                        if (_MidiFile.Tracks[0].MidiEvents[x].midiChannelEvent == MidiHelper.MidiChannelEvent.Note_Off)
+                        {
+                            noteoff = /*_MidiFile.Tracks[0].MidiEvents[x].deltaTime */ System.Convert.ToUInt32(_MidiFile.Tracks[0].MidiEvents[x].Parameters[1]);
+                            set = true;
+                        }
+
+                        uint val = (uint)Mathf.Abs(noteoff);
+                        if(val > 0)
+                            NoteLengths.Enqueue(val*1000/1024-51);
+                        /*
+                        if (set && set2 && (noteoff - noteon) > 0)
+                        {
+                            uint val = (uint)Mathf.Abs(noteoff - noteon);
+                            while (val > 100)
+                            {
+                               val = val / 10;
+                            }
+                            NoteLengths.Enqueue(val);
+                            set = false;
+                            set2 = false;
+                        }
+                        */
                         //Update tempo
                         if (_MidiFile.Tracks[0].MidiEvents[x].midiMetaEvent == MidiHelper.MidiMetaEvent.Tempo)
                         {
                             _MidiFile.BeatsPerMinute = MidiHelper.MicroSecondsPerMinute / System.Convert.ToUInt32(_MidiFile.Tracks[0].MidiEvents[x].Parameters[0]);
                         }
                     }
+                    /*
+                        int i = 0;
+                        foreach (int item in NoteLengths)
+                        {
+                            Debug.Log("Note :" + i++ + " " + item / 102400);
+                        }
+                    */
                     //Set total time to proper value
                     _MidiFile.Tracks[0].TotalTime = _MidiFile.Tracks[0].MidiEvents[_MidiFile.Tracks[0].MidiEvents.Length-1].deltaTime;
                     //reset tempo
@@ -124,7 +168,7 @@ namespace CSharpSynth.Sequencer
             {
                 if (synth.SoundBank == null)
                 {//If there is no bank warn the developer =)
-                    Debug.Log("No Soundbank loaded !");
+                   // Debug.Log("No Soundbank loaded !");
                 }
                 else
                 {
@@ -136,6 +180,7 @@ namespace CSharpSynth.Sequencer
                     synth.SwitchBank(BankManager.Count - 1);
                 }
             }
+
             return true;
         }
         public bool LoadMidi(string file, bool UnloadUnusedInstruments)
@@ -150,7 +195,7 @@ namespace CSharpSynth.Sequencer
             catch (Exception ex)
             {
                 //UnitySynth
-                Debug.Log("Error Loading Midi:\n" + ex.Message);
+              //  Debug.Log("Error Loading Midi:\n" + ex.Message);
                 return false;
             }
             return LoadMidi(mf, UnloadUnusedInstruments);
@@ -239,9 +284,16 @@ namespace CSharpSynth.Sequencer
                     return null;
                 }
             }
+
             while (eventIndex < _MidiFile.Tracks[0].EventCount && _MidiFile.Tracks[0].MidiEvents[eventIndex].deltaTime < (sampleTime + frame))
             {
+             
                 seqEvt.Events.Add(_MidiFile.Tracks[0].MidiEvents[eventIndex]);
+                /*
+                Debug.Log(_MidiFile.Tracks[0].MidiEvents[eventIndex].midiChannelEvent + " " +_MidiFile.Tracks[0].MidiEvents[eventIndex].deltaTime);
+                if(_MidiFile.Tracks[0].MidiEvents[eventIndex + 1].deltaTime < _MidiFile.Tracks[0].EventCount)
+                Debug.Log(_MidiFile.Tracks[0].MidiEvents[eventIndex].midiChannelEvent + " " + _MidiFile.Tracks[0].MidiEvents[eventIndex+1].deltaTime);
+                */
                 eventIndex++;
             }
             return seqEvt;

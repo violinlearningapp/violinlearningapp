@@ -29,6 +29,7 @@ public class MIDIPlayer : MonoBehaviour
     private MidiSequencer midiSequencer;
     private StreamSynthesizer midiStreamSynthesizer;
 
+    private Queue<uint> notes = new Queue<uint>();
 
     private bool state = false;
     private int violinNote = 0;
@@ -56,8 +57,7 @@ public class MIDIPlayer : MonoBehaviour
             sampleBuffer = new float[midiStreamSynthesizer.BufferSize];
 
             midiStreamSynthesizer.LoadBank(bankFilePath);
-
-            midiSequencer = new MidiSequencer(midiStreamSynthesizer);
+        midiSequencer = new MidiSequencer(midiStreamSynthesizer);
 
     }
 
@@ -94,7 +94,11 @@ public class MIDIPlayer : MonoBehaviour
     // Update methods is called the first time.
     void Start()
     {
+
+        if(SyncTrack == false)
+        notes = midiSequencer.NoteLengths;
         StartCoroutine(Wait());
+
         
     }
 
@@ -107,8 +111,10 @@ public class MIDIPlayer : MonoBehaviour
         {
             if (state == true && SyncTrack == false)
             {
-          
-                GameObject.Find("NoteSpawner").transform.GetComponent<NoteSpawner2>().spawnNote(violinString, violinNote);
+                uint len = notes.Dequeue();
+                notes.Enqueue(len);
+                Debug.Log(len);
+                GameObject.Find("NoteSpawner").transform.GetComponent<NoteSpawner2>().spawnNote(violinString, violinNote, len);
                 state = false;
             }
 
